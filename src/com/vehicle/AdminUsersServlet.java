@@ -46,9 +46,9 @@ public class AdminUsersServlet extends HttpServlet {
             
             String sql = "SELECT u.user_id, u.name, u.email, u.phone, u.address, u.approved, " +
                         "u.created_at, COUNT(b.booking_id) as total_bookings, " +
-                        "COALESCE(SUM(CASE WHEN b.status = 'completed' THEN b.total_amount ELSE 0 END), 0) as total_spent, " +
-                        "MAX(b.booking_date) as last_booking_date " +
-                        "FROM user u " +
+                        "COALESCE(SUM(CASE WHEN b.status = 'Completed' THEN b.total_amount ELSE 0 END), 0) as total_spent, " +
+                        "MAX(b.created_at) as last_booking_date " +
+                        "FROM users u " +
                         "LEFT JOIN booking b ON u.user_id = b.user_id " +
                         "GROUP BY u.user_id, u.name, u.email, u.phone, u.address, u.approved, u.created_at " +
                         "ORDER BY u.created_at DESC";
@@ -94,13 +94,13 @@ public class AdminUsersServlet extends HttpServlet {
             Connection con = db.makeConnection();
 
             if ("approve".equals(action)) {
-                String sql = "UPDATE user SET approved = true WHERE user_id = ?";
+                String sql = "UPDATE users SET approved = true WHERE user_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, userId);
                     ps.executeUpdate();
                 }
             } else if ("disapprove".equals(action)) {
-                String sql = "UPDATE user SET approved = false WHERE user_id = ?";
+                String sql = "UPDATE users SET approved = false WHERE user_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, userId);
                     ps.executeUpdate();
@@ -114,7 +114,7 @@ public class AdminUsersServlet extends HttpServlet {
                 }
                 
                 // Then delete the user
-                String deleteUserSql = "DELETE FROM user WHERE user_id = ?";
+                String deleteUserSql = "DELETE FROM users WHERE user_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(deleteUserSql)) {
                     ps.setInt(1, userId);
                     ps.executeUpdate();
