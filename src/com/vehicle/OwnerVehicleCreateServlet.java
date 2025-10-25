@@ -75,8 +75,9 @@ public class OwnerVehicleCreateServlet extends HttpServlet {
             DbConnection db = new DbConnection();
             Connection con = db.makeConnection();
 
-            // Simple insert - database already has the columns
-            String sql = "INSERT INTO vehicle (owner_id, vehicle_name, vehicle_model, vehicle_type, vehicle_number, rent_per_day, availability, status, image_url) VALUES (?,?,?,?,?,?,?,?,?)";
+            // Set new vehicles to pending approval status
+            String approvalStatus = "pending";
+            String sql = "INSERT INTO vehicle (owner_id, vehicle_name, vehicle_model, vehicle_type, vehicle_number, rent_per_day, availability, status, approval_status, image_url) VALUES (?,?,?,?,?,?,?,?,?,?)";
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setInt(1, ownerId);
                 ps.setString(2, vehicleName);
@@ -86,7 +87,8 @@ public class OwnerVehicleCreateServlet extends HttpServlet {
                 ps.setDouble(6, rentPerDay);
                 ps.setBoolean(7, availability);
                 ps.setString(8, status);
-                ps.setString(9, imageUrl);
+                ps.setString(9, approvalStatus);
+                ps.setString(10, imageUrl);
                 ps.executeUpdate();
             }
             response.sendRedirect(request.getContextPath() + "/owner/vehicles");
