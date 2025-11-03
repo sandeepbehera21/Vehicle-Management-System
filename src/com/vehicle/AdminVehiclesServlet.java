@@ -26,7 +26,8 @@ public class AdminVehiclesServlet extends HttpServlet {
         public String vehicleNumber;
         public double rentPerDay;
         public boolean availability;
-        public String status;
+        public String vehicleStatus;
+        public String approvalStatus;
         public String imageUrl;
         public String ownerName;
         public String ownerEmail;
@@ -48,8 +49,8 @@ public class AdminVehiclesServlet extends HttpServlet {
             DbConnection db = new DbConnection();
             Connection con = db.makeConnection();
 
-            // ✅ FIXED QUERY (matches your actual schema)
-            String sql = "SELECT v.vehicle_id, v.vehicle_name, v.vehicle_model, v.vehicle_type, v.vehicle_number, v.rent_per_day, v.availability, v.status, v.image_url, v.created_at, o.owner_id, o.name AS owner_name, o.email AS owner_email FROM vehicle v JOIN owner o ON v.owner_id = o.owner_id ORDER BY v.created_at DESC";
+            // ✅ FIXED QUERY (matches your actual schema with approval_status)
+            String sql = "SELECT v.vehicle_id, v.vehicle_name, v.vehicle_model, v.vehicle_type, v.vehicle_number, v.rent_per_day, v.availability, v.vehicle_status, v.approval_status, v.image_url, v.created_at, o.owner_id, o.name AS owner_name, o.email AS owner_email FROM vehicle v JOIN owner o ON v.owner_id = o.owner_id ORDER BY v.created_at DESC";
 
             System.out.println("DEBUG: Executing SQL: " + sql);
 
@@ -64,7 +65,8 @@ public class AdminVehiclesServlet extends HttpServlet {
                     v.vehicleNumber = rs.getString("vehicle_number");
                     v.rentPerDay = rs.getDouble("rent_per_day");
                     v.availability = rs.getBoolean("availability");
-                    v.status = rs.getString("status");
+                    v.vehicleStatus = rs.getString("vehicle_status");
+                    v.approvalStatus = rs.getString("approval_status");
                     v.imageUrl = rs.getString("image_url");
                     v.createdAt = rs.getString("created_at");
                     v.ownerName = rs.getString("owner_name");
@@ -122,22 +124,22 @@ public class AdminVehiclesServlet extends HttpServlet {
                     ps.setInt(2, vehicleId);
                     ps.executeUpdate();
                 }
-            } else if ("update_status".equals(action)) {
-                String newStatus = request.getParameter("new_status");
-                String sql = "UPDATE vehicle SET status = ? WHERE vehicle_id = ?";
+            } else if ("update_vehicle_status".equals(action)) {
+                String newStatus = request.getParameter("new_vehicle_status");
+                String sql = "UPDATE vehicle SET vehicle_status = ? WHERE vehicle_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setString(1, newStatus);
                     ps.setInt(2, vehicleId);
                     ps.executeUpdate();
                 }
             } else if ("approve".equals(action)) {
-                String sql = "UPDATE vehicle SET status = 'Approved' WHERE vehicle_id = ?";
+                String sql = "UPDATE vehicle SET approval_status = 'Approved' WHERE vehicle_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, vehicleId);
                     ps.executeUpdate();
                 }
             } else if ("reject".equals(action)) {
-                String sql = "UPDATE vehicle SET status = 'Rejected' WHERE vehicle_id = ?";
+                String sql = "UPDATE vehicle SET approval_status = 'Rejected' WHERE vehicle_id = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, vehicleId);
                     ps.executeUpdate();
