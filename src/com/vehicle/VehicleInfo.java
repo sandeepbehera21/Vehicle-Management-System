@@ -10,6 +10,7 @@ public class VehicleInfo {
     private double rent_per_day;
     private boolean availability;
 
+    // Getters and Setters
     public int getVehicle_id() {
         return vehicle_id;
     }

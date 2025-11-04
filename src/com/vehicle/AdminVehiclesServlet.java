@@ -27,6 +27,7 @@ public class AdminVehiclesServlet extends HttpServlet {
         public double rentPerDay;
         public boolean availability;
         public String vehicleStatus;
+        public String status; // Alias for vehicleStatus for JSP compatibility
         public String approvalStatus;
         public String imageUrl;
         public String ownerName;
@@ -66,6 +67,7 @@ public class AdminVehiclesServlet extends HttpServlet {
                     v.rentPerDay = rs.getDouble("rent_per_day");
                     v.availability = rs.getBoolean("availability");
                     v.vehicleStatus = rs.getString("vehicle_status");
+                    v.status = v.vehicleStatus; // Set alias for JSP compatibility
                     v.approvalStatus = rs.getString("approval_status");
                     v.imageUrl = rs.getString("image_url");
                     v.createdAt = rs.getString("created_at");
@@ -82,7 +84,7 @@ public class AdminVehiclesServlet extends HttpServlet {
         }
 
         request.setAttribute("vehicles", vehicles);
-        request.getRequestDispatcher("/admin/vehicle_management.jsp").forward(request, response);
+        request.getRequestDispatcher("/admin/vehicles.jsp").forward(request, response);
     }
 
     @Override

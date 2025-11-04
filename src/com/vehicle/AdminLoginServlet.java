@@ -1,6 +1,10 @@
 package com.vehicle;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,23 +22,43 @@ public class AdminLoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String username = request.getParameter("username");
+        String email = request.getParameter("email");
+        if (email == null || email.isEmpty()) {
+            email = request.getParameter("username");
+        }
         String password = request.getParameter("password");
-        
-        // Simple admin authentication - admin/admin
-        if ("admin".equals(username) && "admin".equals(password)) {
-            HttpSession session = request.getSession();
-            session.setAttribute("admin_id", 1);
-            session.setAttribute("admin_username", "admin");
-            session.setAttribute("admin_name", "System Administrator");
-            session.setAttribute("admin_email", "admin@vehiclemanagement.com");
-            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+
+        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
+            request.setAttribute("error", "Email and password are required.");
+            request.getRequestDispatcher("/admin/admin_login.jsp").forward(request, response);
             return;
         }
-        
-        
-        // Login failed
-        request.setAttribute("error", "Invalid username or password. Use admin/admin");
+
+        try {
+            DbConnection db = new DbConnection();
+            try (Connection con = db.makeConnection();
+                 PreparedStatement ps = con.prepareStatement(
+                         "SELECT admin_id, name, email FROM admin WHERE email = ? AND password = ? LIMIT 1")) {
+                ps.setString(1, email);
+                ps.setString(2, password);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        HttpSession session = request.getSession();
+                        session.setAttribute("admin_id", rs.getInt("admin_id"));
+                        session.setAttribute("admin_username", rs.getString("email"));
+                        session.setAttribute("admin_name", rs.getString("name"));
+                        session.setAttribute("admin_email", rs.getString("email"));
+                        response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                        return;
+                    }
+                }
+            }
+        } catch (ClassNotFoundException | SQLException e) {
+            throw new ServletException(e);
+        }
+
+        request.setAttribute("error", "Invalid email or password.");
         request.getRequestDispatcher("/admin/admin_login.jsp").forward(request, response);
     }
 }
