@@ -25,6 +25,7 @@ public class AdminOwnersServlet extends HttpServlet {
         public String phone;
         public String address;
         public boolean approved;
+        public String accountStatus;
         public String createdAt;
         public int totalVehicles;
         public double totalEarnings;
@@ -43,13 +44,14 @@ public class AdminOwnersServlet extends HttpServlet {
             DbConnection db = new DbConnection();
             Connection con = db.makeConnection();
             
-            String sql = "SELECT o.owner_id, o.name, o.email, o.phone, o.address, o.approved, " +
-                        "o.created_at, COUNT(v.vehicle_id) as total_vehicles, " +
-                        "COALESCE(SUM(CASE WHEN b.status = 'completed' THEN b.total_amount * 0.1 ELSE 0 END), 0) as total_earnings " +
+            String sql = "SELECT o.owner_id, o.name, o.email, o.phone, o.address, o.approved, o.account_status, " +
+                        "o.created_at, COUNT(DISTINCT v.vehicle_id) as total_vehicles, " +
+                        "COALESCE(SUM(CASE WHEN b.status IN ('Completed', 'Returned') THEN b.total_amount * 0.1 ELSE 0 END), 0) + " +
+                        "COALESCE((SELECT SUM(r.amount * 0.1) FROM revenue r WHERE r.owner_id = o.owner_id), 0) as total_earnings " +
                         "FROM owner o " +
                         "LEFT JOIN vehicle v ON o.owner_id = v.owner_id " +
                         "LEFT JOIN booking b ON v.vehicle_id = b.vehicle_id " +
-                        "GROUP BY o.owner_id, o.name, o.email, o.phone, o.address, o.approved, o.created_at " +
+                        "GROUP BY o.owner_id, o.name, o.email, o.phone, o.address, o.approved, o.account_status, o.created_at " +
                         "ORDER BY o.created_at DESC";
             
             try (PreparedStatement ps = con.prepareStatement(sql);
@@ -62,6 +64,7 @@ public class AdminOwnersServlet extends HttpServlet {
                     o.phone = rs.getString("phone");
                     o.address = rs.getString("address");
                     o.approved = rs.getBoolean("approved");
+                    o.accountStatus = rs.getString("account_status");
                     o.createdAt = rs.getString("created_at");
                     o.totalVehicles = rs.getInt("total_vehicles");
                     o.totalEarnings = rs.getDouble("total_earnings");
