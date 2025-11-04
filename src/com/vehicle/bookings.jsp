@@ -1,12 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="java.util.List" %>
-<%@ page import="com.vehicle.OwnerVehiclesServlet.VehicleRow" %>
+<%@ page import="java.util.List,com.vehicle.Booking" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Vehicles - VehicleHub</title>
+  <title>Bookings - VehicleHub</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
   <link rel="stylesheet" href="<%= request.getContextPath() %>/css/unified-style.css">
@@ -18,7 +17,7 @@
     response.sendRedirect(request.getContextPath() + "/owner/login");
     return;
   }
-  List<VehicleRow> vehicles = (List<VehicleRow>) request.getAttribute("vehicles");
+  List<Booking> bookings = (List<Booking>) request.getAttribute("bookings");
 %>
 
   <div class="container-fluid">
@@ -33,10 +32,10 @@
             <a class="nav-link" href="<%= request.getContextPath() %>/owner/dashboard">
               <i class="fas fa-tachometer-alt"></i>Dashboard
             </a>
-            <a class="nav-link active" href="<%= request.getContextPath() %>/owner/vehicles">
+            <a class="nav-link" href="<%= request.getContextPath() %>/owner/vehicles">
               <i class="fas fa-car"></i>My Vehicles
             </a>
-            <a class="nav-link" href="<%= request.getContextPath() %>/owner/bookings">
+            <a class="nav-link active" href="<%= request.getContextPath() %>/owner/bookings">
               <i class="fas fa-calendar-check"></i>Bookings
             </a>
             <a class="nav-link" href="<%= request.getContextPath() %>/owner/revenue">
@@ -59,64 +58,51 @@
       <!-- Main Content -->
       <main class="main-content">
         <div class="page-header">
-          <h1 class="page-title"><i class="fas fa-car me-2"></i>My Vehicles</h1>
-          <a href="<%= request.getContextPath() %>/owner/vehicles/new" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>Add Vehicle
-          </a>
+          <h1 class="page-title"><i class="fas fa-calendar-check me-2"></i>Incoming Bookings</h1>
         </div>
 
         <div class="table-container">
     <table class="table table-hover align-middle">
       <thead class="table-light">
         <tr>
-          <th>Photo</th>
-          <th>Name</th>
-          <th>Model</th>
-          <th>Type</th>
-          <th>Registration No.</th>
-          <th>Rent/Day (₹)</th>
+          <th>Booking ID</th>
+          <th>User</th>
+          <th>Vehicle</th>
+          <th>Dates</th>
+          <th>Total</th>
           <th>Status</th>
-          <th>Approval Status</th>
-          <th>Available</th>
           <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
-      <% if (vehicles != null) {
-           for (VehicleRow v : vehicles) { %>
+      <% if (bookings != null && !bookings.isEmpty()) {
+           for (Booking b : bookings) { %>
         <tr>
-          <td style="width:140px">
-            <% if (v.imageUrl != null) { %>
-              <img src="<%= v.imageUrl %>" alt="img" class="img-thumbnail" style="max-height:80px;">
-            <% } %>
-          </td>
-          <td><%= v.vehicleName %></td>
-          <td><%= (v.vehicleModel != null ? v.vehicleModel : "-") %></td>
-          <td><%= v.vehicleType %></td>
-          <td><%= v.vehicleNumber %></td>
-          <td>₹ <%= String.format("%.2f", v.rentPerDay) %></td>
+          <td><%= b.getBooking_id() %></td>
+          <td><%= b.getUser_name() %></td>
+          <td><%= b.getVehicle_name() %></td>
+          <td><%= b.getStart_date() %> to <%= b.getEnd_date() %></td>
+          <td>₹<%= String.format("%.2f", b.getTotal_amount()) %></td>
           <td>
-            <span class="badge <%= "Available".equalsIgnoreCase(v.status) ? "bg-success" : ("On Trip".equalsIgnoreCase(v.status) ? "bg-warning text-dark" : "bg-secondary") %>"><%= (v.status != null ? v.status : "Available") %></span>
-          </td>
-          <td>
-            <span class="badge <%= "approved".equalsIgnoreCase(v.approvalStatus) ? "bg-success" : ("pending".equalsIgnoreCase(v.approvalStatus) ? "bg-warning text-dark" : "bg-danger") %>"><%= v.approvalStatus %></span>
-          </td>
-          <td>
-            <span class="badge <%= v.availability ? "bg-success" : "bg-secondary" %>"><%= v.availability ? "Yes" : "No" %></span>
+            <span class="badge <%= "Approved".equals(b.getStatus())?"bg-success":("Pending".equals(b.getStatus())?"bg-warning text-dark":("Rejected".equals(b.getStatus())?"bg-danger":"bg-secondary")) %>"><%= b.getStatus() %></span>
           </td>
           <td class="text-end">
-            <a href="<%= request.getContextPath() %>/owner/vehicles/edit?id=<%= v.vehicleId %>" class="btn btn-sm btn-outline-primary me-2">
-              <i class="fas fa-edit me-1"></i>Edit
-            </a>
-            <form class="d-inline" action="<%= request.getContextPath() %>/owner/vehicles/delete" method="POST" onsubmit="return confirm('Delete this vehicle?')">
-              <input type="hidden" name="vehicle_id" value="<%= v.vehicleId %>">
-              <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-trash me-1"></i>Delete
+            <% if ("Pending".equals(b.getStatus())) { %>
+            <form action="<%= request.getContextPath() %>/owner/update_booking_status" method="POST" class="d-inline">
+              <input type="hidden" name="booking_id" value="<%= b.getBooking_id() %>">
+              <button type="submit" name="action" value="Approved" class="btn btn-sm btn-success me-2">
+                <i class="fas fa-check me-1"></i>Approve
+              </button>
+              <button type="submit" name="action" value="Rejected" class="btn btn-sm btn-danger">
+                <i class="fas fa-times me-1"></i>Reject
               </button>
             </form>
+            <% } %>
           </td>
         </tr>
-      <% } } %>
+      <% } } else { %>
+        <tr><td colspan="7" class="text-center">No bookings found.</td></tr>
+      <% } %>
       </tbody>
         </table>
         </div>
