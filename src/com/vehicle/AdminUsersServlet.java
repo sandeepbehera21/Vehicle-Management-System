@@ -25,6 +25,7 @@ public class AdminUsersServlet extends HttpServlet {
         public String phone;
         public String address;
         public boolean approved;
+        public String accountStatus;
         public String createdAt;
         public int totalBookings;
         public double totalSpent;
@@ -44,13 +45,13 @@ public class AdminUsersServlet extends HttpServlet {
             DbConnection db = new DbConnection();
             Connection con = db.makeConnection();
             
-            String sql = "SELECT u.user_id, u.name, u.email, u.phone, u.address, u.approved, " +
+            String sql = "SELECT u.user_id, u.name, u.email, u.phone, u.address, u.approved, u.account_status, " +
                         "u.created_at, COUNT(b.booking_id) as total_bookings, " +
-                        "COALESCE(SUM(CASE WHEN b.status = 'Completed' THEN b.total_amount ELSE 0 END), 0) as total_spent, " +
+                        "COALESCE(SUM(CASE WHEN b.status IN ('Completed', 'Returned') THEN b.total_amount * 0.1 ELSE 0 END), 0) as total_spent, " +
                         "MAX(b.created_at) as last_booking_date " +
                         "FROM users u " +
                         "LEFT JOIN booking b ON u.user_id = b.user_id " +
-                        "GROUP BY u.user_id, u.name, u.email, u.phone, u.address, u.approved, u.created_at " +
+                        "GROUP BY u.user_id, u.name, u.email, u.phone, u.address, u.approved, u.account_status, u.created_at " +
                         "ORDER BY u.created_at DESC";
             
             try (PreparedStatement ps = con.prepareStatement(sql);
@@ -63,6 +64,7 @@ public class AdminUsersServlet extends HttpServlet {
                     u.phone = rs.getString("phone");
                     u.address = rs.getString("address");
                     u.approved = rs.getBoolean("approved");
+                    u.accountStatus = rs.getString("account_status");
                     u.createdAt = rs.getString("created_at");
                     u.totalBookings = rs.getInt("total_bookings");
                     u.totalSpent = rs.getDouble("total_spent");
